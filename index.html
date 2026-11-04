@@ -1,0 +1,233 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Hex Design Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one column — wall canvas on top, tool tray and readouts beneath, like a workbench */
+:root{
+  --bg:#F2F0F3; --surface:#FFFFFF; --ink:#1D1A22; --muted:#6A6372; --line:#DDD8E0;
+  --accent:#7A1F30; --accent-ink:#FFFFFF; --good:#2F6B3A; --good-bg:#E4F0E4; --warn:#8A4B0B; --warn-bg:#FAEEDA;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* wall materials stay physical in both themes */
+  --navy:#1E2A45; --panel-w:#EFEBE4; --panel-b:#7A1F30; --hutch:#6E1E2A;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141218; --surface:#1E1B23; --ink:#EEEAF1; --muted:#A39CA9; --line:#34303A;
+  --accent:#C9576B; --accent-ink:#1A0B0F; --good:#9FD3A6; --good-bg:#1F3324; --warn:#F2C27B; --warn-bg:#3A2A12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141218; --surface:#1E1B23; --ink:#EEEAF1; --muted:#A39CA9; --line:#34303A;
+  --accent:#C9576B; --accent-ink:#1A0B0F; --good:#9FD3A6; --good-bg:#1F3324; --warn:#F2C27B; --warn-bg:#3A2A12; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,5vw,32px);line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:6px 0 0;color:var(--muted);max-width:60ch}
+.wall{background:#1E2A45;border-radius:14px;overflow:hidden;line-height:0}
+.wall svg{width:100%;height:auto;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+.tray{display:flex;flex-wrap:wrap;gap:8px}
+.tool{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);font:500 14px var(--body);cursor:pointer}
+.tool[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tool:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{width:16px;height:16px;clip-path:polygon(25% 6%,75% 6%,100% 50%,75% 94%,25% 94%,0 50%);flex:none}
+.sw.w{background:#EFEBE4;box-shadow:inset 0 0 0 1px #0003}
+.sw.b{background:#7A1F30}
+.ico{width:16px;text-align:center;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat.over b{color:var(--warn)}
+.checks{display:flex;flex-wrap:wrap;gap:8px;min-height:30px}
+.chip{font-size:13px;font-weight:500;padding:5px 11px;border-radius:999px}
+.chip.good{background:var(--good-bg);color:var(--good)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.group{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-right:4px}
+.btn{padding:8px 13px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font:500 14px var(--body);cursor:pointer}
+.btn:hover,.tool:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.confirm{display:inline-flex;gap:6px;align-items:center;font-size:14px}
+.toast{font-size:13px;color:var(--warn);min-height:20px}
+@media (max-width:520px){.stats{gap:6px}.stat{padding:8px 6px}.stat b{font-size:18px}.stat span{font-size:10px;letter-spacing:.03em}}
+@media (prefers-reduced-motion:no-preference){.tool,.btn{transition:background .15s,border-color .15s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Hex Design Planner</h1>
+    <p>Tap or drag to place panels. Tubes and ridges can go on panels you've already placed.</p>
+  </header>
+
+  <div class="wall"><svg id="wall" role="img" aria-label="Navy wall grid with hexagon panels"></svg></div>
+
+  <div class="tray" role="toolbar" aria-label="Tools">
+    <button class="tool" id="t-w" data-tool="w" aria-pressed="true"><i class="sw w"></i>White</button>
+    <button class="tool" id="t-b" data-tool="b" aria-pressed="false"><i class="sw b"></i>Burgundy</button>
+    <button class="tool" id="t-tube" data-tool="tube" aria-pressed="false"><span class="ico">⌇</span>Tube</button>
+    <button class="tool" id="t-ridge" data-tool="ridge" aria-pressed="false"><span class="ico">≡</span>Ridges</button>
+    <button class="tool" id="t-erase" data-tool="erase" aria-pressed="false"><span class="ico">✕</span>Erase</button>
+  </div>
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <div class="stats">
+    <div class="stat"><b id="s-panels">0</b><span>Panels</span></div>
+    <div class="stat"><b id="s-w">0</b><span>White</span></div>
+    <div class="stat"><b id="s-b">0</b><span>Burgundy</span></div>
+    <div class="stat" id="st-tubes"><b id="s-tubes">0/10</b><span>Tubes</span></div>
+    <div class="stat"><b id="s-blank">0</b><span>Blanks</span></div>
+  </div>
+  <div class="checks" id="checks"></div>
+
+  <div class="row">
+    <div class="group">
+      <span class="label">Start from</span>
+      <button class="btn" id="p-drift9">Drift · 9</button>
+      <button class="btn" id="p-drift10">Drift · 10</button>
+      <button class="btn" id="p-garland">Garland</button>
+    </div>
+    <div class="group">
+      <button class="btn" id="undo">Undo</button>
+      <span id="clearWrap"><button class="btn" id="clear">Clear</button></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const R=28,PAD=8,HH=Math.sqrt(3)*R,COLS=14,ROWS=7;
+const W=PAD*2+2*R+1.5*R*(COLS-1), H=PAD*2+HH*(ROWS+0.5);
+const cx=c=>PAD+R+1.5*R*c, cy=(c,r)=>PAD+HH*(r+0.5+(c%2?0.5:0));
+const HUT_TOP=PAD+HH, HUT_X1=cx(9)-R*0.85, HUT_X2=cx(12)+R*0.85;
+const blocked=(c,r)=>c>=9&&c<=12&&cy(c,r)+HH/2>HUT_TOP+2;
+const C={navy:"#1E2A45",w:"#EFEBE4",b:"#7A1F30",hutch:"#6E1E2A",ridgeW:"#CFC8BC",ridgeB:"#5A1522"};
+const MAX_TUBES=10, KEY="hexwall-v1";
+const svg=document.getElementById("wall");
+svg.setAttribute("viewBox",`0 0 ${W.toFixed(1)} ${H.toFixed(1)}`);
+
+let state={}, tool="w", history=[];
+const k=(c,r)=>c+","+r;
+const nbrs=(c,r)=>{const o=c%2;return [[c,r-1],[c,r+1],[c-1,o?r:r-1],[c-1,o?r+1:r],[c+1,o?r:r-1],[c+1,o?r+1:r]]};
+const hex=(x,y,s)=>{let p=[];for(let i=0;i<6;i++){const a=Math.PI/3*i;p.push((x+s*Math.cos(a)).toFixed(1)+","+(y+s*Math.sin(a)).toFixed(1))}return p.join(" ")};
+const hash=s=>{let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))|0;return h};
+
+function build(spec){const s={};spec.forEach(([c,r,color,tube,ridge])=>{s[k(c,r)]={color,tube:!!tube,ridge:!!ridge}});return s}
+const stair=[[2,5],[3,4],[4,4],[5,3],[6,3],[7,2],[8,2]];
+const PRESETS={
+  drift9:()=>build([...stair.map(([c,r],i)=>[c,r,i<3?"w":"b",1,0]),[3,5,"w",0,1],[4,5,"w",0,1]]),
+  drift10:()=>build([...stair.map(([c,r],i)=>[c,r,i<3?"w":"b",1,0]),[3,5,"w",0,1],[4,5,"w",0,1],[6,4,"b",0,1]]),
+  garland:()=>build([[2,1,"w",1],[3,1,"b",0,1],[4,1,"w",1],[5,1,"b",0,1],[6,1,"w",1],[7,1,"b",0,1],[8,1,"w",1],[5,2,"w",1]])
+};
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function load(){try{const v=localStorage.getItem(KEY);if(v){const o=JSON.parse(v);if(o&&typeof o==="object")return o}}catch(e){}return null}
+
+function render(){
+  let s=`<rect width="${W}" height="${H}" fill="${C.navy}"/>`;
+  // hutch silhouette
+  s+=`<g pointer-events="none"><rect x="${HUT_X1-4}" y="${HUT_TOP-6}" width="${HUT_X2-HUT_X1+8}" height="7" fill="${C.hutch}"/>`+
+     `<rect x="${HUT_X1}" y="${HUT_TOP}" width="${HUT_X2-HUT_X1}" height="${H-HUT_TOP}" fill="${C.hutch}"/>`+
+     `<rect x="${HUT_X1+10}" y="${HUT_TOP+8}" width="${HUT_X2-HUT_X1-20}" height="${HH*3.1}" fill="#00000030"/>`+
+     [1,2].map(i=>`<rect x="${HUT_X1+10}" y="${HUT_TOP+8+HH*i}" width="${HUT_X2-HUT_X1-20}" height="3" fill="${C.hutch}"/>`).join("")+
+     `<rect x="${HUT_X1-5}" y="${HUT_TOP+HH*3.4}" width="${HUT_X2-HUT_X1+10}" height="6" fill="#B98A55"/>`+
+     `<circle cx="${HUT_X1+22}" cy="${HUT_TOP-14}" r="8" fill="#4F7A34"/><rect x="${HUT_X1+16}" y="${HUT_TOP-12}" width="12" height="7" fill="#C98A2E"/>`+
+     `<circle cx="${HUT_X2-26}" cy="${HUT_TOP-26}" r="4" fill="#E8C8D0"/><circle cx="${HUT_X2-19}" cy="${HUT_TOP-20}" r="4" fill="#E8C8D0"/><rect x="${HUT_X2-25}" y="${HUT_TOP-16}" width="6" height="10" fill="#9DB7C9" opacity=".6"/>`+
+     `<text x="${(HUT_X1+HUT_X2)/2}" y="${H-14}" text-anchor="middle" font-family="Figtree,system-ui,sans-serif" font-size="12" fill="#ffffff88" letter-spacing="1">COFFEE HUTCH</text></g>`;
+  let shadows="",panels="",empties="",tubes="";
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+    if(blocked(c,r))continue;
+    const x=cx(c),y=cy(c,r),key=k(c,r),p=state[key];
+    if(cy(c,r)+HH/2>H-PAD+1)continue;
+    if(!p){empties+=`<polygon data-k="${key}" points="${hex(x,y,R-3)}" fill="#ffffff03" stroke="#ffffff22" stroke-width="1" stroke-dasharray="3 4"/>`;continue}
+    shadows+=`<polygon points="${hex(x+2.5,y+3.5,R-3)}" fill="#00000055"/>`;
+    let g=`<polygon data-k="${key}" points="${hex(x,y,R-3)}" fill="${C[p.color]}" stroke="#00000030" stroke-width="1"/>`;
+    if(p.ridge){
+      const sR=R-3,col=p.color==="w"?C.ridgeW:C.ridgeB;
+      for(let i=1;i<=5;i++){const dy=-HH/2+3+i*HH*0.085,hw=sR-Math.abs(dy)/Math.sqrt(3)-3;
+        g+=`<line x1="${(x-hw).toFixed(1)}" y1="${(y+dy).toFixed(1)}" x2="${(x+hw).toFixed(1)}" y2="${(y+dy).toFixed(1)}" stroke="${col}" stroke-width="1.6" pointer-events="none"/>`}
+    }
+    panels+=g;
+    if(p.tube){
+      const d=hash(key)%2?1:-1,ring=p.color==="w"?C.b:C.w;
+      tubes+=`<g pointer-events="none">`+
+        `<path d="M${x} ${y-12} C${x+d*16} ${y-2} ${x+d*2} ${y+16} ${x+d*12} ${y+34} S${x+d*6} ${y+50} ${x+d*14} ${y+58}" fill="none" stroke="#5E8F3C" stroke-width="1.6"/>`+
+        `<path d="M${x} ${y-12} C${x-d*8} ${y-20} ${x-d*14} ${y-18} ${x-d*16} ${y-26}" fill="none" stroke="#5E8F3C" stroke-width="1.4"/>`+
+        [[d*11,-2,30],[d*6,14,-20],[d*13,30,40],[d*7,44,-30],[d*14,57,20],[-d*15,-25,-40],[-d*7,-18,10]].map(([dx,dy,a],i)=>
+          `<ellipse cx="${x+dx}" cy="${y+dy}" rx="5.5" ry="3.3" transform="rotate(${a*d} ${x+dx} ${y+dy})" fill="${i%2?"#4F7A34":"#78AD4E"}"/>`).join("")+
+        `<rect x="${x-4}" y="${y-13}" width="8" height="24" rx="4" fill="#D6ECF5" fill-opacity=".38" stroke="#ffffffcc" stroke-width=".8"/>`+
+        `<rect x="${x-3}" y="${y-2}" width="6" height="12" rx="3" fill="#8FC7D9" fill-opacity=".5"/>`+
+        `<rect x="${x-7}" y="${y-14}" width="14" height="5" rx="2" fill="${ring}"/>`+
+        `</g>`;
+    }
+  }
+  svg.innerHTML=s+empties+shadows+panels+tubes;
+  stats();
+}
+
+function stats(){
+  const vals=Object.entries(state);
+  const n=vals.length,w=vals.filter(([,p])=>p.color==="w").length,t=vals.filter(([,p])=>p.tube).length;
+  $("s-panels").textContent=n;$("s-w").textContent=w;$("s-b").textContent=n-w;
+  $("s-tubes").textContent=t+"/"+MAX_TUBES;$("s-blank").textContent=n-t;
+  $("st-tubes").classList.toggle("over",t>MAX_TUBES);
+  const chips=[];
+  if(n){
+    const seen=new Set();let groups=0;
+    for(const [key] of vals){if(seen.has(key))continue;groups++;const q=[key];seen.add(key);
+      while(q.length){const [c,r]=q.pop().split(",").map(Number);for(const [a,b] of nbrs(c,r)){const kk=k(a,b);if(state[kk]&&!seen.has(kk)){seen.add(kk);q.push(kk)}}}}
+    chips.push(groups===1?["good","All panels touching"]:["warn",groups+" separate groups"]);
+    let stacked=0;for(const [key,p] of vals){if(!p.tube)continue;const [c,r]=key.split(",").map(Number);const below=state[k(c,r+1)];if(below&&below.tube)stacked++}
+    chips.push(stacked?["warn",stacked+(stacked>1?" tubes hang":" tube hangs")+" right over another tube"]:["good","No tubes stacked"]);
+    let bb=0;for(const [key,p] of vals){if(p.color!=="b")continue;const [c,r]=key.split(",").map(Number);
+      const ns=nbrs(c,r).map(([a,b])=>state[k(a,b)]).filter(Boolean);if(ns.length&&ns.every(q=>q.color==="b"))bb++}
+    if(t>MAX_TUBES)chips.push(["warn","More tubes than the 10 you have"]);
+    if(t&&t%2===0)chips.push(["warn","Even tube count, try "+(t+1>MAX_TUBES?t-1:t+1)]);
+  }
+  $("checks").innerHTML=chips.map(([c,txt])=>`<span class="chip ${c}">${txt}</span>`).join("");
+  $("undo").disabled=!history.length;
+}
+const $=id=>document.getElementById(id);
+let toastT;function toast(m){$("toast").textContent=m;clearTimeout(toastT);toastT=setTimeout(()=>$("toast").textContent="",2600)}
+
+function snapshot(){history.push(JSON.stringify(state));if(history.length>60)history.shift()}
+function apply(key,first){
+  const p=state[key];
+  if(tool==="w"||tool==="b"){if(p&&p.color===tool)return false;state[key]=p?{...p,color:tool}:{color:tool,tube:false,ridge:false};return true}
+  if(tool==="erase"){if(!p)return false;delete state[key];return true}
+  if(!first)return false;
+  if(!p){toast("Place a panel there first, then add the "+(tool==="tube"?"tube.":"ridges."));return false}
+  if(tool==="tube"){
+    if(!p.tube&&Object.values(state).filter(q=>q.tube).length>=MAX_TUBES){toast("All 10 tubes are placed. Remove one to move it.");return false}
+    state[key]={...p,tube:!p.tube};return true}
+  if(tool==="ridge"){state[key]={...p,ridge:!p.ridge};return true}
+}
+let down=false,stroked=false,lastKey=null;
+function keyAt(e){const el=document.elementFromPoint(e.clientX,e.clientY);return el&&el.dataset?el.dataset.k:null}
+svg.addEventListener("pointerdown",e=>{const key=keyAt(e);if(!key)return;down=true;stroked=false;lastKey=key;
+  const before=JSON.stringify(state);if(apply(key,true)){history.push(before);if(history.length>60)history.shift();stroked=true;render();save()}
+  try{svg.setPointerCapture(e.pointerId)}catch(_){} });
+svg.addEventListener("pointermove",e=>{if(!down)return;const key=keyAt(e);if(!key||key===lastKey)return;lastKey=key;
+  const before=JSON.stringify(state);if(apply(key,false)){if(!stroked){history.push(before);stroked=true}render();save()}});
+["pointerup","pointercancel"].forEach(ev=>svg.addEventListener(ev,()=>{down=false;lastKey=null}));
+
+document.querySelectorAll(".tool").forEach(b=>b.addEventListener("click",()=>{tool=b.dataset.tool;
+  document.querySelectorAll(".tool").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"))}));
+["drift9","drift10","garland"].forEach(n=>$("p-"+n).addEventListener("click",()=>{snapshot();state=PRESETS[n]();render();save()}));
+$("undo").addEventListener("click",()=>{if(!history.length)return;state=JSON.parse(history.pop());render();save()});
+function askClear(){
+  const wrap=$("clearWrap");
+  const reset=()=>{wrap.innerHTML=`<button class="btn" id="clear">Clear</button>`;$("clear").addEventListener("click",askClear)};
+  wrap.innerHTML=`<span class="confirm">Clear the wall? <button class="btn primary" id="cy">Clear</button><button class="btn" id="cn">Keep</button></span>`;
+  $("cy").addEventListener("click",()=>{snapshot();state={};render();save();reset()});
+  $("cn").addEventListener("click",reset);
+}
+$("clear").addEventListener("click",askClear);
+
+state=load()||PRESETS.drift10();
+render();
+</script>
+
+</body></html>
